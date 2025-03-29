@@ -1,0 +1,92 @@
+import tello
+import speech_recognition as sr
+import time
+from datetime import datetime
+from geopy.geocoders import Nominatim
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+# Initialisation du drone
+drone = tello.Tello()
+drone.connect()
+
+# Reconnaissance vocale
+recognizer = sr.Recognizer()
+
+# Fonction pour écouter les commandes vocales
+def écouter_commande():
+    with sr.Microphone() as source:
+        print("En attente de commande...")
+        audio = recognizer.listen(source)
+    try:
+        commande = recognizer.recognize_google(audio, language="fr-FR")
+        print("Commande reconnue :", commande)
+        return commande.lower()
+    except sr.UnknownValueError:
+        print("Commande non comprise.")
+        return ""
+
+# Fonction pour obtenir l'heure actuelle
+def obtenir_heure():
+    return datetime.now().strftime("%H:%M")
+
+# Fonction pour obtenir la météo (simulée ici)
+def obtenir_météo():
+    return "La météo actuelle est ensoleillée avec 20°C."
+
+# Fonction pour obtenir la localisation du drone (ici Paris, France)
+def obtenir_localisation():
+    geolocator = Nominatim(user_agent="geoapiExercises")
+    location = geolocator.geocode("Paris, France")
+    return f"Latitude: {location.latitude}, Longitude: {location.longitude}"
+
+# Fonction pour contrôler Spotify
+def contrôle_spotify(action):
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id="VOTRE_ID", client_secret="VOTRE_SECRET", redirect_uri="http://localhost:8888/callback", scope="user-modify-playback-state"))
+    if action == "play":
+        sp.start_playback()
+    elif action == "pause":
+        sp.pause_playback()
+
+# Commandes vocales pour le drone et autres fonctionnalités
+def exécuter_commande(commande):
+    if "décollage" in commande:
+        drone.takeoff()
+    elif "atterrissage" in commande:
+        drone.land()
+    elif "avant" en commande:
+        drone.move_forward(50)
+    elif "arrière" en commande:
+        drone.move_back(50)
+    elif "gauche" en commande:
+        drone.move_left(50)
+    elif "droite" en commande:
+        drone.move_right(50)
+    elif "heure" en commande:
+        print("Il est", obtenir_heure())
+    elif "météo" en commande:
+        print(obtenir_météo())
+    elif "localisation" en commande:
+        print(obtenir_localisation())
+    elif "spotify" en commande:
+        if "lecture" en commande:
+            contrôle_spotify("play")
+        elif "pause" en commande:
+            contrôle_spotify("pause")
+    elif "chute libre" en commande:
+        drone.send_rc_control(0, 0, -10, 0)
+        time.sleep(2)
+        drone.send_rc_control(0, 0, 30, 0)
+    elif "photo" en commande:
+        drone.take_picture()  # Prend une photo
+    elif "vidéo" en commande:
+        drone.start_video()  # Démarre l'enregistrement vidéo
+    elif "fin vidéo" en commande:
+        drone.stop_video()  # Arrête l'enregistrement vidéo
+    else:
+        print("Commande non reconnue")
+
+# Boucle principale pour écouter en permanence et exécuter les commandes
+while True:
+    commande = écouter_commande()
+    exécuter_commande(commande)
